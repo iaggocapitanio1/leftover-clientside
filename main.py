@@ -1,9 +1,12 @@
 import cv2 as cv
-import numpy
-
+import logging.config
 import settings
 from utils.functions import load_image, process_frame
 from utils.rest import send_frame
+
+logging.config.dictConfig(settings.LOGGER)
+logger = logging.getLogger(__name__)
+
 
 def main():
     path = settings.BASE_DIR.joinpath("images/1.jpg")  # replace it with the version that enables image reception from

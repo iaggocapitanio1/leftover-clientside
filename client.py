@@ -1,13 +1,11 @@
 import logging.config
-from pathlib import Path
-from typing import Literal, Union, Optional
-import requests
+
 from requests_auth import OAuth2ClientCredentials, OAuth2, JsonTokenFileCache
 
 import settings
 
 OAuth2.token_cache = JsonTokenFileCache('./cache.json')
-logging.config.dictConfig(settings.LOGGER)
+
 logger = logging.getLogger(__name__)
 
 oauth = OAuth2ClientCredentials(
