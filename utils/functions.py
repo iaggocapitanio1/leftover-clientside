@@ -1,9 +1,75 @@
+import os
+from pathlib import Path
+from typing import Union, Tuple, Dict, Optional
+
 import cv2 as cv
 import numpy
-from typing import Tuple
+
+import settings
 
 
-# noinspection PyUnresolvedReferences
+def load_image(filepath: Union[str, Path]) -> Tuple[str, numpy.ndarray]:
+    """
+    This function loads the image using cv2's imread function
+    """
+    file = os.path.basename(filepath)
+    name, ext = os.path.splitext(file)
+    frame = cv.imread(filepath.__str__())
+    return name, frame
+
+
+def process_frame(frame: numpy.ndarray, name: str, show_frame: bool = False) -> Optional[Tuple[numpy.ndarray, Dict]]:
+    """
+    Processes an image using OpenCV operations including conversion to grayscale, blurring, Canny edge detection,
+    dilation, erosion, and contour detection. If a contour passes a specified area filter, an approximation of
+    the contour is drawn on the original image, and the bounding box around it is determined.
+
+    Args:
+        frame (np.ndarray): The original image to process.
+        name (str): The name to give to the output frame.
+        show_frame (bool, optional): Determines whether the result should be displayed using cv.imshow. Defaults to False.
+
+    Returns:
+        Optional[Tuple[np.ndarray, Dict]]: Returns a tuple of the processed image and a dictionary containing bounding
+                                           box information and cleaned contour points, or None if no contour passes
+                                           the area filter.
+    """
+
+    # Convert frame to gray, apply Gaussian blur and Canny edge detection
+    gray_frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+    blurred_frame = cv.GaussianBlur(gray_frame, ksize=settings.GAUSSIAN_KERNEL_SIZE, sigmaX=1)
+    canny_frame = cv.Canny(blurred_frame, threshold1=settings.THRESHOLD_MIN, threshold2=settings.THRESHOLD_MAX)
+
+    # Dilate and erode the frame to clean up noise
+    dilatation = numpy.ones(settings.DILATATION_SIZE, numpy.uint8)
+    dilated_frame = cv.dilate(canny_frame, dilatation, iterations=2)
+    eroded_frame = cv.erode(dilated_frame, dilatation, iterations=2)
+
+    # Find contours
+    contours, _ = cv.findContours(eroded_frame, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+    ratio = get_ratio_pixels_millimeters(img=frame)
+
+    for contour in contours:
+        if cv.contourArea(contour) > settings.MIN_AREA_FILTER:
+            # Approximate the contour and draw it on the original image
+            clean_contour_points = cv.approxPolyDP(contour, epsilon=0.01 * cv.arcLength(contour, True), closed=True)
+            processed_frame = cv.polylines(frame.copy(), pts=clean_contour_points, isClosed=True, color=(255, 0, 0),
+                                           thickness=12,
+                                           lineType=cv.LINE_AA)
+
+            bbox = get_bounding_box(img=processed_frame, corners=clean_contour_points, draw=True)
+
+            # If show_frame is True, perform additional operations and display the image
+            if show_frame:
+                draw_corners(img=processed_frame, corners=clean_contour_points, ratio=ratio, color=(0, 255, 155))
+                draw_enumerate(img=processed_frame, corners=clean_contour_points)
+                cv.imshow(f"Processed Frame: {name}", processed_frame)
+
+            return processed_frame, dict(bbox=dict(x=bbox[0], y=bbox[1], width=bbox[2], height=bbox[3]),
+                                         corners=clean_contour_points.tolist())
+
+    return None
+
 
 def get_ratio_pixels_millimeters(img: numpy.ndarray, aruco_type=cv.aruco.DICT_5X5_50) -> float:
     parameters = cv.aruco.DetectorParameters_create()
@@ -27,16 +93,16 @@ def draw_corners(img: numpy.ndarray, corners: numpy.ndarray, ratio: float, color
     Draw lines connecting the corners of a polygon on an image, and add text with the distance between the corners in
     both pixels and centimeters.
 
-    :param img: Input image on which to draw the lines and text.
-    :type img: numpy.ndarray
-    :param corners: An array of corner coordinates (x, y) for the polygon.
-    :type corners: numpy.ndarray
-    :param ratio: Conversion factor from pixels to centimeters, used to calculate distance between corners.
-    :type ratio: float
-    :param color: The color of the lines and text in BGR format. Default is green (0, 255, 0).
-    :type color: tuple
-    :param thickness: The thickness of the lines and text. Default is 1.
-    :type thickness: int
+    :param: img: Input image on which to draw the lines and text.
+    :type: img: numpy.ndarray
+    :param: corners: An array of corner coordinates (x, y) for the polygon.
+    :type: corners: numpy.ndarray
+    :param: ratio: Conversion factor from pixels to centimeters, used to calculate distance between corners.
+    :type: ratio: float
+    :param: color: The color of the lines and text in BGR format. Default is green (0, 255, 0).
+    :type: color: tuple
+    :param: thickness: The thickness of the lines and text. Default is 1.
+    :type: thickness: int
     :return: The input image with lines connecting the corners and text showing the distance in pixels and centimeters.
     :rtype: numpy.ndarray
     """

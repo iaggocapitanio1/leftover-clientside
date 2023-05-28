@@ -2,6 +2,9 @@ certifi==2022.12.7
 charset-normalizer==3.0.1
 et-xmlfile==1.1.0
 idna==3.4
+numpy==1.24.2
+oauthlib==3.2.2
+opencv-contrib-python==4.5.4.60
 python-dateutil==2.8.2
 python-dotenv==1.0.0
 pytz==2022.7.1
@@ -10,6 +13,3 @@ requests-auth==6.0.0
 six==1.16.0
 urllib3==1.26.14
 watchdog==2.3.0
-numpy==1.24.2
-oauthlib==3.2.2
-opencv-contrib-python==4.5.4.60

@@ -8,6 +8,7 @@ BASE_DIR = Path(__file__).resolve().parent
 
 NUM_WORKER_THREADS = int(os.environ.get("NUM_WORKER_THREADS", 4))
 
+LEFTOVER_URL = os.environ.get("LEFTOVER_URL", "http://localhost:8000/api/v1/storages/leftover/")
 
 CLIENT_ID = os.environ.get("CLIENT_ID", "")
 
@@ -17,6 +18,15 @@ TOKEN_URL = os.environ.get("TOKEN_URL", "http://localhost:8000/auth/token")
 
 URL = os.environ.get("URL", "http://127.0.0.1:8000/api/v1")
 
+THRESHOLD_MIN = 100
+
+THRESHOLD_MAX = 250
+
+GAUSSIAN_KERNEL_SIZE = (9, 9)
+
+DILATATION_SIZE = (3, 3)
+
+MIN_AREA_FILTER = 2000  # square pixels
 
 
 LOGGER = {
