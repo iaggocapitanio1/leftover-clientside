@@ -1,4 +1,5 @@
 import os
+import logging
 from pathlib import Path
 from typing import Union, Tuple, Dict, Optional
 
@@ -6,6 +7,8 @@ import cv2 as cv
 import numpy
 
 import settings
+
+logger = logging.getLogger(__name__)
 
 
 def load_image(filepath: Union[str, Path]) -> Tuple[str, numpy.ndarray]:
@@ -47,8 +50,9 @@ def process_frame(frame: numpy.ndarray, name: str, show_frame: bool = False) -> 
 
     # Find contours
     contours, _ = cv.findContours(eroded_frame, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+    logger.info("Initiating process to establish the ratio between pixels and millimeters.")
     ratio = get_ratio_pixels_millimeters(img=frame)
-
+    logger.info(f"Ratio found: {ratio} pixels/mm ")
     for contour in contours:
         if cv.contourArea(contour) > settings.MIN_AREA_FILTER:
             # Approximate the contour and draw it on the original image
@@ -76,8 +80,8 @@ def get_ratio_pixels_millimeters(img: numpy.ndarray, aruco_type=cv.aruco.DICT_5X
     aruco_dict = cv.aruco.getPredefinedDictionary(aruco_type)
     marker_size = aruco_dict.markerSize * 4  # cm
     corners, ids, _ = cv.aruco.detectMarkers(img, aruco_dict, parameters=parameters)
-    aruco_perimeter = cv.arcLength(corners[0], True)
-    return round(aruco_perimeter / marker_size, 7) / 100
+    aruco_perimeter = cv.arcLength(corners[0], True)  # pixels
+    return round(aruco_perimeter / marker_size / 10, 7)
 
 
 def draw_enumerate(img: numpy.ndarray, corners: numpy.ndarray, color=(255, 0, 0), thickness=1, radius=2):
@@ -115,7 +119,7 @@ def draw_corners(img: numpy.ndarray, corners: numpy.ndarray, ratio: float, color
         pt1 = tuple(corners[i][0])
         pt2 = tuple(corners[j][0])
         dist = int(numpy.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2))
-        dist_cm = round(dist / ratio / 100, 1)
+        dist_cm = round(dist / ratio / 10, 1)
         cv.line(img, pt1, pt2, (0, 155, 0), thickness=2)
         cv.putText(img, f"d: {dist_cm} cm, {dist} ps", ((pt1[0] + pt2[0] - 50) // 2, (pt1[1] + pt2[1]) // 2),
                    cv.FONT_HERSHEY_SIMPLEX, 0.5, color=color, thickness=thickness)

@@ -14,8 +14,11 @@ def main():
     name, frame = load_image(path)
 
     while True:
+        logging.info(f"Attempting to process the frame {name}")
         frame, payload = process_frame(frame, name, show_frame=True)
-        send_frame(frame=frame, payload=payload)
+        logging.info(f"Frame successfully processed and payload obtained: {payload}")
+        data = dict(klass="Oak", **payload.get('bbox'))
+        send_frame(frame=frame, payload=data)
         key = cv.waitKey(0)  # Wait for user input
         if key:
             break
