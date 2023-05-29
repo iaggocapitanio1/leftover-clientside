@@ -20,7 +20,8 @@ def main():
         frame, payload = process_frame(frame, name, show_frame=False)
         logging.info(f"Frame successfully processed and payload obtained: {payload}")
         # data = dict(klass="Oak", **payload.get('bbox'), ratio=payload.get('ratio'))
-        data = dict(klass="Oak", corners=turn_to_polygon(payload.get('corners')), ratio=payload.get('ratio'))
+        data = dict(klass="Oak", corners=turn_to_polygon(payload.get('corners')), ratio=payload.get('ratio'),
+                    confirmed=True)
         send_frame(frame=frame, payload=data)
         key = cv.waitKey(0)  # Wait for user input
         if key:
