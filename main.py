@@ -1,7 +1,9 @@
-import cv2 as cv
 import logging.config
+
+import cv2 as cv
+
 import settings
-from utils.functions import load_image, process_frame
+from utils.functions import load_image, process_frame, turn_to_polygon
 from utils.rest import send_frame
 
 logging.config.dictConfig(settings.LOGGER)
@@ -15,9 +17,10 @@ def main():
 
     while True:
         logging.info(f"Attempting to process the frame {name}")
-        frame, payload = process_frame(frame, name, show_frame=True)
+        frame, payload = process_frame(frame, name, show_frame=False)
         logging.info(f"Frame successfully processed and payload obtained: {payload}")
-        data = dict(klass="Oak", **payload.get('bbox'), ratio=payload.get('ratio'))
+        # data = dict(klass="Oak", **payload.get('bbox'), ratio=payload.get('ratio'))
+        data = dict(klass="Oak", corners=turn_to_polygon(payload.get('corners')), ratio=payload.get('ratio'))
         send_frame(frame=frame, payload=data)
         key = cv.waitKey(0)  # Wait for user input
         if key:

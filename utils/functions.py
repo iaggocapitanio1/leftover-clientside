@@ -1,11 +1,13 @@
+import json
 import os
 import logging
 from pathlib import Path
 from typing import Union, Tuple, Dict, Optional
-
+from shapely.geometry import Polygon
+import geojson
 import cv2 as cv
 import numpy
-
+import itertools
 import settings
 
 logger = logging.getLogger(__name__)
@@ -140,3 +142,11 @@ def transform(corners: numpy.ndarray, x: int, y: int, w: int, h: int) -> numpy.n
     if normalized[-1] != normalized[0]:
         normalized.append(normalized[0])
     return numpy.array(normalized)
+
+
+def turn_to_polygon(corners) -> str:
+    # Flatten the list of coordinates
+    flattened_coordinates = list(itertools.chain(*corners))
+    flattened_coordinates.append(flattened_coordinates[0])
+    geojson_polygon = geojson.Polygon(flattened_coordinates)
+    return json.dumps(geojson_polygon)

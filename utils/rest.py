@@ -40,6 +40,7 @@ def send_frame(frame: np.ndarray, payload: Dict) -> bool:
         # Check if the request was successful
         if response.status_code != 201:
             logger.error("Failed to upload file, status code: %s", response.status_code)
+            logger.error("Failed to upload file, error content: %s", response.content)
             return False
 
         logger.info("File has been successfully uploaded!")
