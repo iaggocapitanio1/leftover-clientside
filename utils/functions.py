@@ -44,12 +44,10 @@ def process_frame(frame: numpy.ndarray, name: str, show_frame: bool = False) -> 
     gray_frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
     blurred_frame = cv.GaussianBlur(gray_frame, ksize=settings.GAUSSIAN_KERNEL_SIZE, sigmaX=1)
     canny_frame = cv.Canny(blurred_frame, threshold1=settings.THRESHOLD_MIN, threshold2=settings.THRESHOLD_MAX)
-
     # Dilate and erode the frame to clean up noise
     dilatation = numpy.ones(settings.DILATATION_SIZE, numpy.uint8)
     dilated_frame = cv.dilate(canny_frame, dilatation, iterations=2)
     eroded_frame = cv.erode(dilated_frame, dilatation, iterations=2)
-
     # Find contours
     contours, _ = cv.findContours(eroded_frame, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
     logger.info("Initiating process to establish the ratio between pixels and millimeters.")
@@ -60,20 +58,16 @@ def process_frame(frame: numpy.ndarray, name: str, show_frame: bool = False) -> 
             # Approximate the contour and draw it on the original image
             clean_contour_points = cv.approxPolyDP(contour, epsilon=0.01 * cv.arcLength(contour, True), closed=True)
             processed_frame = cv.polylines(frame.copy(), pts=clean_contour_points, isClosed=True, color=(255, 0, 0),
-                                           thickness=12,
-                                           lineType=cv.LINE_AA)
-
-            bbox = get_bounding_box(img=processed_frame, corners=clean_contour_points, draw=True)
-
+                                           thickness=12, lineType=cv.LINE_AA)
+            bbox = get_bounding_box(img=processed_frame, corners=clean_contour_points, draw=False)
             # If show_frame is True, perform additional operations and display the image
             if show_frame:
                 draw_corners(img=processed_frame, corners=clean_contour_points, ratio=ratio, color=(0, 255, 155))
                 draw_enumerate(img=processed_frame, corners=clean_contour_points)
                 cv.imshow(f"Processed Frame: {name}", processed_frame)
-
-            return processed_frame, dict(bbox=dict(x=bbox[0], y=bbox[1], width=bbox[2], height=bbox[3]),
-                                         corners=clean_contour_points.tolist(), ratio=ratio)
-
+                frame = processed_frame
+            return frame, dict(bbox=dict(x=bbox[0], y=bbox[1], width=bbox[2], height=bbox[3]), ratio=ratio,
+                               corners=clean_contour_points.tolist())
     return None
 
 
