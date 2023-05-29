@@ -70,7 +70,7 @@ def process_frame(frame: numpy.ndarray, name: str, show_frame: bool = False) -> 
                 cv.imshow(f"Processed Frame: {name}", processed_frame)
 
             return processed_frame, dict(bbox=dict(x=bbox[0], y=bbox[1], width=bbox[2], height=bbox[3]),
-                                         corners=clean_contour_points.tolist())
+                                         corners=clean_contour_points.tolist(), ratio=ratio)
 
     return None
 

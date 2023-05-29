@@ -17,7 +17,7 @@ def main():
         logging.info(f"Attempting to process the frame {name}")
         frame, payload = process_frame(frame, name, show_frame=True)
         logging.info(f"Frame successfully processed and payload obtained: {payload}")
-        data = dict(klass="Oak", **payload.get('bbox'))
+        data = dict(klass="Oak", **payload.get('bbox'), ratio=payload.get('ratio'))
         send_frame(frame=frame, payload=data)
         key = cv.waitKey(0)  # Wait for user input
         if key:

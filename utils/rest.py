@@ -11,6 +11,10 @@ from client import oauth
 logger = logging.getLogger(__name__)
 
 
+def ends_with_slash(url: str) -> str:
+    return url if url.endswith('/') else url + '/'
+
+
 def send_frame(frame: np.ndarray, payload: Dict) -> bool:
     """
     This function sends a frame (image) to a specified API endpoint as a POST request.
@@ -28,9 +32,10 @@ def send_frame(frame: np.ndarray, payload: Dict) -> bool:
 
         # Convert bytes to BytesIO, as it behaves like a file object
         img_io = io.BytesIO(img_bytes)
-        files = {'file': img_io}
+        files = {'file': ('image.jpg', img_io, 'image/jpeg')}
+        url = ends_with_slash(settings.LEFTOVER_URL)
         # Send a POST request to the API endpoint
-        response: requests.Response = requests.post(settings.LEFTOVER_URL, data=payload, files=files, auth=oauth)
+        response: requests.Response = requests.post(url, data=payload, files=files, auth=oauth)
 
         # Check if the request was successful
         if response.status_code != 201:
@@ -41,9 +46,15 @@ def send_frame(frame: np.ndarray, payload: Dict) -> bool:
         return True
 
     except requests.exceptions.RequestException as req_error:
-        logger.error("A network problem occurred: %s", req_error)
+        if len(str(req_error)) <= 500:
+            logger.error("A network problem occurred: %s", req_error)
+        else:
+            logger.error(f"A network problem occurred.")
     except Exception as error:
-        logger.error("An error occurred while sending the frame: %s", error)
+        if len(str(error)) <= 500:
+            logger.error("An error occurred while sending the frame: %s", error)
+        else:
+            logger.error("An error occurred while sending the frame.")
 
     # Return False in case of any exception
     return False
