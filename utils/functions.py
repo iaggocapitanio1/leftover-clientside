@@ -23,6 +23,21 @@ def load_image(filepath: Union[str, Path]) -> Tuple[str, numpy.ndarray]:
     return name, frame
 
 
+def crop(image, percentage_w, percentage_h, left_m: int = 0, top_m: int = 0):
+    height, width, _ = image.shape
+
+    # Calculate the coordinates for the center crop
+    crop_width = int(width * percentage_w)  # Set the desired width of the center crop
+    crop_height = int(height * percentage_h)  # Set the desired height of the center crop
+    start_x = int((width - crop_width) / 2) + int(left_m)
+    start_y = int((height - crop_height) / 2) + int(top_m)
+    end_x = start_x + crop_width
+    end_y = start_y + crop_height
+
+    # Perform the center crop
+    return image[start_y:end_y, start_x:end_x]
+
+
 def process_frame(frame: numpy.ndarray, name: str, show_frame: bool = False) -> Optional[Tuple[numpy.ndarray, Dict]]:
     """
     Processes an image using OpenCV operations including conversion to grayscale, blurring, Canny edge detection,
@@ -62,9 +77,11 @@ def process_frame(frame: numpy.ndarray, name: str, show_frame: bool = False) -> 
             bbox = get_bounding_box(img=processed_frame, corners=clean_contour_points, draw=False)
             # If show_frame is True, perform additional operations and display the image
             if show_frame:
-                draw_corners(img=processed_frame, corners=clean_contour_points, ratio=ratio, color=(0, 255, 155))
+                draw_corners(img=processed_frame, corners=clean_contour_points, ratio=ratio, color=(0, 0, 15),
+                             thickness=2)
                 draw_enumerate(img=processed_frame, corners=clean_contour_points)
-                cv.imshow(f"Processed Frame: {name}", processed_frame)
+                cv.imshow(f"Processed Frame: {name}", crop(processed_frame, percentage_h=1, percentage_w=.35,
+                                                           left_m=0, top_m=30))
                 frame = processed_frame
             return frame, dict(bbox=dict(x=bbox[0], y=bbox[1], width=bbox[2], height=bbox[3]), ratio=ratio,
                                corners=clean_contour_points.tolist())
@@ -80,7 +97,7 @@ def get_ratio_pixels_millimeters(img: numpy.ndarray, aruco_type=cv.aruco.DICT_5X
     return round(aruco_perimeter / marker_size / 10, 7)
 
 
-def draw_enumerate(img: numpy.ndarray, corners: numpy.ndarray, color=(255, 0, 0), thickness=1, radius=2):
+def draw_enumerate(img: numpy.ndarray, corners: numpy.ndarray, color=(0, 255, 0), thickness=1, radius=2):
     for i, point in enumerate(corners):
         x, y = point[0]
         cv.circle(img, (x, y), radius=radius, color=color, thickness=thickness)
@@ -88,6 +105,7 @@ def draw_enumerate(img: numpy.ndarray, corners: numpy.ndarray, color=(255, 0, 0)
 
 
 def draw_corners(img: numpy.ndarray, corners: numpy.ndarray, ratio: float, color: tuple = (0, 255, 0),
+                 color_line: tuple = (0, 50, 150),
                  thickness: int = 1) -> numpy.ndarray:
     """
     Draw lines connecting the corners of a polygon on an image, and add text with the distance between the corners in
@@ -116,9 +134,11 @@ def draw_corners(img: numpy.ndarray, corners: numpy.ndarray, ratio: float, color
         pt2 = tuple(corners[j][0])
         dist = int(numpy.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2))
         dist_cm = round(dist / ratio / 10, 1)
-        cv.line(img, pt1, pt2, (0, 155, 0), thickness=2)
-        cv.putText(img, f"d: {dist_cm} cm, {dist} ps", ((pt1[0] + pt2[0] - 50) // 2, (pt1[1] + pt2[1]) // 2),
-                   cv.FONT_HERSHEY_SIMPLEX, 0.5, color=color, thickness=thickness)
+        cv.line(img, pt1, pt2, color_line, thickness=2)
+        cv.putText(img, f"d: {dist_cm} cm, "
+                     #   f"{dist} pixels"
+                   , ((pt1[0] + pt2[0] - 50) // 2, (pt1[1] + pt2[1]) // 2),
+                   cv.FONT_HERSHEY_SIMPLEX, 0.65, color=color, thickness=thickness)
     return img
 
 
