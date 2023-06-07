@@ -74,14 +74,14 @@ def process_frame(frame: numpy.ndarray, name: str, show_frame: bool = False) -> 
             clean_contour_points = cv.approxPolyDP(contour, epsilon=0.01 * cv.arcLength(contour, True), closed=True)
             processed_frame = cv.polylines(frame.copy(), pts=clean_contour_points, isClosed=True, color=(255, 0, 0),
                                            thickness=12, lineType=cv.LINE_AA)
-            bbox = get_bounding_box(img=processed_frame, corners=clean_contour_points, draw=False)
+            bbox = get_bounding_box(img=processed_frame, corners=clean_contour_points, draw=True)
             # If show_frame is True, perform additional operations and display the image
             if show_frame:
                 draw_corners(img=processed_frame, corners=clean_contour_points, ratio=ratio, color=(0, 0, 15),
                              thickness=2)
                 draw_enumerate(img=processed_frame, corners=clean_contour_points)
-                cv.imshow(f"Processed Frame: {name}", crop(processed_frame, percentage_h=1, percentage_w=.35,
-                                                           left_m=0, top_m=30))
+                # cv.imshow(f"Processed Frame: {name}", crop(processed_frame, percentage_h=.55, percentage_w=.35,
+                #                                            left_m=0, top_m=-100))
                 frame = processed_frame
             return frame, dict(bbox=dict(x=bbox[0], y=bbox[1], width=bbox[2], height=bbox[3]), ratio=ratio,
                                corners=clean_contour_points.tolist())

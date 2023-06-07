@@ -11,8 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    path = settings.BASE_DIR.joinpath(
-        "images/images_fundo_verde/classe8a.jpg")  # replace it with the version that enables image reception from
+    path = settings.BASE_DIR.joinpath(f"images/img/1.jpg")
     # the IDS camera
     name, frame = load_image(path)
 
@@ -24,13 +23,26 @@ def main():
         data = dict(klass="Oak", corners=turn_to_polygon(payload.get('corners')), ratio=payload.get('ratio'),
                     confirmed=False)
         send_frame(frame=frame, payload=data)
-        cv.imwrite("outputs/48.1x21.7.png", crop(frame, percentage_h=8, percentage_w=.35,
-                                                 left_m=200, top_m=30))
+        cv.imwrite(f"outputs/normal/22x22.5_1.png", crop(frame, percentage_h=.55, percentage_w=.35, left_m=0,
+                                                         top_m=-250))
         key = cv.waitKey(0)  # Wait for user input
         if key:
             break
     cv.destroyAllWindows()
 
 
+def process():
+    for i in range(1, 13):
+        path = settings.BASE_DIR.joinpath(f"images/img/{i}.jpg")
+        name, frame = load_image(path)
+        frame = crop(frame, percentage_h=.65, percentage_w=.35, left_m=0, top_m=-250)
+        frame, payload = process_frame(frame, name, show_frame=True)
+        data = dict(klass="Oak", corners=turn_to_polygon(payload.get('corners')), ratio=payload.get('ratio'),
+                    confirmed=False)
+        send_frame(frame=frame, payload=data)
+        cv.imwrite(f"outputs/normal/21.2x21_{i}.png", frame)
+
+
 if __name__ == '__main__':
-    main()
+    # main()
+    process()
